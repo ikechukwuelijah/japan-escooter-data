@@ -1,0 +1,418 @@
+---
+title: 'Exam Template: Statistical Inference'
+author: "21076682"
+date: 'Nov 2022: Jan22 run'
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# do not change these options
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(error = TRUE,comment=NA) # do not edit this line.
+```
+
+# Instructions to students
+
+Save this template as your studentID.Rmd; you will upload this file as part of your submission. Change the information on line 3 of this file changing the author information to your **student ID**. Do not change the authorship to your name.
+
+Your should knit this file to a document **Word** format. The Word document is what will be marked!
+
+Any changes that you make to the data (e.g. variable name changes) should be made entirely within R.
+
+The subsubsections labelled **Answer:** indicate where you should put in your written Answers. The template also provides blank code chunks for you to complete your Answers; you may choose to add additional chunks if required.
+
+This is an individual assessment: do not work with any other person during this exam. Text-matching software will be used on all submissions. 
+
+# Instructions for submission 
+You must submit your assignment before the stated deadline by electronic submission through Blackboard.
+
+- It is a good idea to save your work early and frequently to ensure you have no issues with the submission portal. Multiple submissions can be made to the portal, but only the final one will be accepted.
+
+- It is your responsibility to submit the exam in a format stipulated above. Your marks may be affected if your tutor cannot open or properly view your submission.
+
+- Do not leave submission to the very last minute. Always allow time in case of technical issues.
+
+- The date and time of your submission is taken from the Blackboard server and is recorded when your submission is complete, not when you click Submit. 
+
+- It is essential that you check that you have submitted the correct file(s), and that each complete file was received. Submission receipts are accessed from the Coursework tab.
+
+There is no late submission permitted on this timed assessment. Ensure that you submit your submission in good time. Neither the module leader nor module team can accept late assessments, do not ask them to do so.
+
+
+
+# Background to the research
+
+The West of England Combined Authority currently has a trial scheme in which residents can hire an e-scooter for local transport needs.
+
+Bristol City Council are interested in potential summer demand for e-scooters based on weather, visibility, and distance from the city center. Data has been obtained from a city in Japan which has an e-scooter rental scheme. 
+
+The data that has been collected from the city in Japan, is to be analysed to potentially assist Bristol City Council planning. 
+
+
+
+
+# Data instructrions
+
+The data to be used is in the file on Blackboard titled JapanEScooterData.csv
+
+Look at summer days, and only use daylight hours which is defined by having solar radiation (MJ/m2) values greater than 0 when the scheme was functioning.
+
+After you have completed the instructions above for selecting the subgroup of the data to analyse, use your studentID as a seed to then select a random sample of 500 observations to use for your analyses.
+
+You should remove any redundant variables (where only one value remains in that variable).
+
+This subset of the data is what you should use for the rest of this assessment. You must only analyse the specified data. No other data should be considered for this assessment.
+
+
+
+```{r libraries, include=FALSE}
+# load required libraries / additional files
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(summarytools)){install.packages("summarytools")}
+if(!require(performance)){install.packages("performance")}
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(performance)
+library(psych)
+library(patchwork)
+
+```
+
+```{r data}
+# load dataset here
+
+JESdf <- read_csv("JapanEScooterData.csv",locale=locale(encoding="latin1"))
+
+
+```
+
+#START OF QUESTIONS
+
+# Question 1: Data Preparation (10 marks)
+
+Ensure you have prepared your submission as per **Instructions to Students**. Implement the required data preparation from **Data Instructions**, in the code chunk below.
+
+**(10 marks)**
+
+### Answer:
+
+
+
+```{r dataprep}
+JESdf$Date<- as.Date(JESdf$Date, format = '%d/%m/%Y')
+JESdf1<- subset(JESdf, `Solar Radiation (MJ/m2)`>0 & Season == "Summer") 
+
+JESdf2= subset(JESdf1, select = -c(Season,`Scheme Functioning`,`Snowfall(cm)`, `Solar Radiation (MJ/m2)`))
+
+#setting seed
+
+set.seed(21076682)
+japsam <- sample_n(JESdf2, 500)
+
+```
+
+# Question 2: Exploratory Data Analysis (25 marks)
+
+## Descriptive Statistics
+
+a.	What descriptive statistics would be appropriate for this dataset?  Explain why these are useful in this context.
+
+**(2 marks)**
+
+### Answer: 
+Descriptive statistics describe the behavior of certain element in a set. In context of this dataset, the descriptive analysis describe the distribution of rentals, weather patterns, visibility and the distance from center of the rental customers.
+We can find the mean, standard deviation and minimum and the maximum value to have an idea of how those variables are distributed in Japan.
+
+
+b. Produce those descriptive statistics in the code chunk below:
+
+**(4 marks)**
+
+### Answer:
+
+```{r DescriptiveStats}
+print(describe(japsam))
+```
+
+c. Interpret the descriptive statistics in context
+
+**(4 marks)**
+
+### Answer:
+As we can observe above, the median number of scooters hired per hour in sample in the summer is 986, the minimum being 9 and the maximum being 3221. The standard deviation is 688 which is very high suggesting a highly varied hiring pattern per hour in summer.
+The median distance from center is 5.24 while the maximum is almost twice at 9.99 km.
+The median temperature in the summer is 29.80 which is 10 degree Celsius higher than Bristol, the maximum temperature is 41.40C.
+The median wind speed is 1.70 while the maximum is 4.70m/s which is gentle breeze.
+The median visibility is 1769 which is very high as expected in summer.
+The rainfall is mostly non-existent however occasionally there is heavy rain.
+
+## Exploratory Graphs
+
+d. What exploratory graphs would be appropriate for this data set? Explain why these are useful in this context.
+
+**(2 marks)**
+
+### Answer:
+Line graphs and scatter plots are appropriate as they let us investigate the growth of trends in hiring and the relationship between rentals and other variables.
+
+
+e. Now produce those exploratory graphs in the code chunk below:
+
+**(4 marks)**
+
+### Answer:
+
+```{r ExploratoryGraphs}
+# Scatter Plots 
+
+plotA <- japsam%>%
+  ggplot(aes(x=`Distance from centre(km)`, y=`Rented eScooter Count`))+geom_point()
+plotB <- japsam%>%
+  ggplot(aes(x=`Temperature(°C)`, y=`Rented eScooter Count`))+geom_point()
+plotC <- japsam%>%
+  ggplot(aes(x=`Wind speed (m/s)`, y=`Rented eScooter Count`))+geom_point()
+plotD <- japsam%>%
+  ggplot(aes(x=`Visibility(10m)`, y=`Rented eScooter Count`))+geom_point()
+plotE <- japsam%>%
+  ggplot(aes(x=`Rainfall(mm)`, y=`Rented eScooter Count`))+geom_point()
+plotF <- japsam%>%
+  ggplot(aes(x=`Hour`, y=`Rented eScooter Count`))+geom_point()
+
+
+## Adding all plots and showing output of the various scatter plots.
+
+plotA+plotB+plotC+plotD+plotE+plotF
+
+
+# Line Graphs
+
+graph1 <- japsam %>%
+  ggplot(aes(x=Date, y=`Rented eScooter Count`)) +
+  geom_line()+
+  geom_point()
+graph2 <- japsam %>%
+  ggplot(aes(x=Date, y=`Wind speed (m/s)`)) +
+  geom_line()+
+  geom_point()
+graph3<- japsam %>%
+  ggplot(aes(x=Date, y=`Rainfall(mm)`)) +
+  geom_line()+
+  geom_point() 
+graph4<- japsam%>%
+  ggplot(aes(x=Date, y=`Visibility(10m)`)) +
+  geom_line()+
+  geom_point()
+graph5<- japsam %>%
+  ggplot(aes(x=Date, y=`Temperature(°C)`)) +
+  geom_line()+
+  geom_point()
+
+
+
+## Adding all graphs and showing output of the various Line graphs.
+
+graph1+graph2+graph3+graph4+graph5
+
+
+```
+
+f. Interpret these exploratory graphs in context
+
+**(4 marks)**
+
+### Answer:
+Scatterplots.
+We can see from the scatter plots that the number of rentals have positive correlations with visibility, temperature, wind speed and hour of the day. Distance from center does not seem to have any affect in rentals. Rainfall, on the other hand, affects rentals; customers rent more when there is no rain and very less even if there is slightest rainfall.
+
+
+## Correlations
+
+g. Show the linear correlations using the code chunk below
+
+**(2 marks)**
+
+### Answer:
+
+```{r linearcor}
+cor_japsam <- subset(japsam, select= c(`Rented eScooter Count`,`Distance from centre(km)`,
+`Temperature(°C)`,`Wind speed (m/s)`,`Visibility(10m)`,`Rainfall(mm)`, Hour))
+print(cor(cor_japsam))
+
+```
+
+h.	Interpret the most relevant linear correlations within this data.
+**(3 marks)**
+
+### Answer:
+The strongest linear correlations in this dataset are:
+number of rentals with hour of the day, wind speed with hour of the day, temperature with hour of the day. Since our dependent variable is number of rentals, the most relevant correlations are:
+rentals and hour (0.45 moderate positive correlation)
+rentals and wind speed (0.27, weak positive correlation)
+rentals and rainfall  (-0.20, weak negative correlation)
+
+Temperature has significant affect on rentals but it does not have linear correlation.
+
+
+# Question 3: Bivariate relationship (15 marks)
+
+a. Create a linear model to model the relationship between the dependent variable and **one** appropriate explanatory variable in the code chunk below.
+
+**(3 marks)**
+
+### Answer:
+
+
+```{r model1}
+model1 <- lm(`Rented eScooter Count`~`Hour`, data= japsam)
+summary(model1)
+
+```
+
+b.	State the fitted model and use this to explain the model. Interpret the r-squared value
+
+**(4 marks)**
+
+### Answer:
+The fitted model is 
+$$Rentals = 134.642+79.90*Hour$$
+This is a linear model. It works by taking a hour in 24 hr format and multiplying it by 79.90 and adding 134.64 to approximate the number of rentals.
+for example, if we take the hour 10, the approximate rentals would be:
+rentals = 134.642+79.90*10 = 933 
+which is a good approximation.
+However, the r-squared is 0.24 which means hour only accounts for 24% of rental behavior. There are other variables which are necessary to completely model for number of rentals.
+
+c.	Comment on the performance of this model, including comments on overall model fit and the validity of model assumptions. Include any additional code required for you to make these comments in the code chunk below.
+
+**(4 marks)**
+
+### Answer:
+The model does not confirm to the linearity assumption the best, however, it is a fair approximation, the residuals fall perfectly to the normality line, and the distribution is under the m=normal distribution curve. In addition, there are few influential observations.
+We can conclude that this is a moderately good model, although it does not completely satisfy the assumptions of linear regression.
+```{r model1performance}
+
+check_model(model1)
+
+```
+
+d. Use bootstrapping on this model to obtain a 95% confidence interval of the estimate of the slope parameter.
+
+**(4 marks)**
+
+### Answer:
+
+```{r bootstrap}
+# Set up bootstrap syntax
+Nbootstrap<- 1000
+slope_model<-rep(NA,Nbootstrap) 
+# Perform bootstrap for the specified number of observations.
+
+for(i in seq_len(Nbootstrap)){
+ coff_values<-sample(seq_along(japsam$Date),size=length(japsam$Date),replace
+=TRUE) 
+ bootstrap.sample<- japsam[coff_values,]
+model <- lm(`Rented eScooter Count`~`Hour`, data= bootstrap.sample)
+ 
+slope_model[i] <- model$coefficients[2]
+}
+quantile(slope_model,c(0.05,0.5,0.95))
+
+```
+
+
+
+# Question 4: Multivariable relationship (15 marks)
+
+a. Create a model with all potential explanatory variables included. Explain and interpret the model, considering limitations of this model. Include any code required in the code chunk below:
+**(7 marks)**
+
+### Answer:
+The new model is 
+$$rentals = 1163.47*97.10*Hour+42.73*wind speed-5.64*distace from center-46.67*Temperature+0.07*Visibility-0.97.5*rainfall$$
+The p-value is less than 0.05 meaning all this model is statistically significant. The r-squared is 0.37. This value is larger than model1 signifying a better performance. However, the variables in the model are still insufficient to describe the rental numbers. This model is still incomplete. It either needs more information about other variables or needs to change from linear to other types of models.
+
+Using the model performance outputs, we can see that this data does not confirm to the linearity assumption, this might suggest that a linear model is not the best to describe the rentals in an hour. The normality assumption is however satisfied.
+```{r model2}
+model2 <- lm(`Rented eScooter Count`~Hour+`Wind speed (m/s)`+`Distance from centre(km)`+`Temperature(°C)`+`Visibility(10m)`+`Rainfall(mm)`, data= japsam)
+summary(model2)
+check_model(model2)
+
+```
+
+
+
+
+
+b. Simplify the model created in part (a). Justify your approach and decision-making process for simplifying the model. Explain and interpret the simplified model. Comment on the performance of this simplified model, including comments on overall model fit and the validity of model assumptions. Include any code required in the code chunk below:
+
+**(8 marks)**
+
+### Answer:
+Model 2 has 5 additional variables, but does not improve r squared significantly. Simplifying a model can help in getting the approximation quickly and saving decision time during early phases of planning. 
+For this purpose, I would remove the variable with least linear correlations one by one and compare their r-squared. The ideal balance will be when the r-squared is satisfactory and the complications in calculations will be easier.
+As we can see that removing distance did not affect the R-Squared in model4, however, decreasing in Temperature reduced the Rsquared. Additionally, removing rainfall, the r squared was back to 0.24.
+Hence, i would suggest using model 3 for more accurate approximation during later phase of planning, while using model1 for rough calculations when speed is more valuable.
+
+```{r model2performance}
+
+model3 <- lm(`Rented eScooter Count`~Hour+`Wind speed (m/s)`+`Temperature(°C)`+`Visibility(10m)`+`Rainfall(mm)`, data= japsam)
+summary(model3)
+
+model4 <- lm(`Rented eScooter Count`~Hour+`Wind speed (m/s)`+`Visibility(10m)`+`Rainfall(mm)`, data= japsam)
+summary(model4)
+
+model5 <- lm(`Rented eScooter Count`~Hour+`Wind speed (m/s)`+`Visibility(10m)`, data= japsam)
+summary(model5)
+```
+
+
+
+# Question 5: Report (35 marks)
+
+Write a short report of 300-500 words for Bristol City Council outlining your findings, referring to your analyses where appropriate. 
+
+Suggested to include in the report:
+
+- illustrate what they could learn about patterns in when e-Scooters are hired, supported by an appropriate model.
+
+- give any data collection recommendations you have so that they can optimize analyses for their situation.
+
+- comment on any suggestions for alterations to the statistical model that would be appropriate to consider.
+
+- highlight what may or may not be directly transferable from the scenario analysed.
+ 
+**(35 marks)**
+
+### Answer:
+Starting and promoting rental e-Scooters is a good step towards COP26 and to reduce carbon footprint for the residents of Bristol. In addition, a well developed e-scooter service reduces customers of the stress of parking, maintenance, and insurance.
+the rentals of e-scooters in the city in Japan, where this data is taken from tend to follow the following patterns.
+1. The number of hires are high during the end of the day between hours 4pm to 8pm with a peak in early morning around 6 am.
+2. Any hint of rainfall drastically decreases the rental volume; people rent mostly when it isn't raining.
+3. The rentals are high when the temperature is between 20 degrees to 32 degrees, higher temperature decreases rental volume.
+3. Wind seem to positively affect e-scooter rentals. People tend to rent more when there is gentle breeze during the summer.
+
+Additional Data Collection
+
+1. The models clearly showed that the available data is not enough to predict the rentals. Although weather and visibility affect the rentals, they aren't significant. In addition, the distance from center does not affect at all in hiring of e-scooters. Bristol City should look towards other sources data providing different information to model the rental better.
+2. Those data might be promotional offers, fare prices of public transportation, age group, etc.
+
+Alteration to the Models
+
+Linear model does not accurately approximate the behavior of rentals. With additional data, machine learning models or non linear models can be tested for better accuracy. However, this comes with additional costs. Going green and investing in sustainable transport is better for any city and this analysis shows that there will be demand. 
+
+Similarity to Bristol
+
+The city in Japan seem to have similar wind and rainfall behavior to Bristol. However, temperature in the city of japan is higher than Bristol. This is a good sign as people tend to rent more in moderate temperatures. Higher visibility increases rental volume. So, it is advisable to invent mini head lamp attached to the e-scooters and increase visibility in bicycle tracks to increase rentals during winter periods. Considering that In Bristol during early winter period it gets dark quick between 4-5pm.
+
+
+
+
+# End matter - Session Information
+
+Do not edit this part. Make sure that you compile your document so that the information about your session (including software / package versions) is included in your submission.
+
+```{r}
+sessionInfo()
+```
